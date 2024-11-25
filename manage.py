@@ -3,6 +3,7 @@
 import os
 import sys
 
+# test pipeline
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pygoat.settings')
