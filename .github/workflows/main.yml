@@ -67,8 +67,9 @@ jobs:
      with:
        name: docker-scout-findings
        path: scout-report.sarif
+       
  dast_scan:
-    name: Deploy and Run DAST Scan
+    name: Build and Run DAST Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -80,20 +81,33 @@ jobs:
       with:
         docker_version: '20.10.7'
 
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
     - name: Pull PyGoat Image
       run: docker pull pygoat/pygoat:latest
 
     - name: Run PyGoat Application
       run: docker run --rm -d -p 8000:8000 pygoat/pygoat:latest
 
-    - name: Run DAST Scan
+    - name: Pull OWASP ZAP Docker Image
+      run: docker pull owasp/zap2docker-live
+
+    - name: Run OWASP ZAP DAST Scan
       run: |
-        docker run --rm -v $(pwd):/zap/wrk/ -t owasp/zap2docker-stable zap-baseline.py \
+        docker run --rm -v $(pwd):/zap/wrk/ -t owasp/zap2docker-live zap-baseline.py \
           -t http://localhost:8000 -r zap-report.html
 
-    - name: Upload Report
+    - name: Upload ZAP Report
       uses: actions/upload-artifact@v3
       if: always()
       with:
         name: zap-report.html
         path: zap-report.html
+
+    - name: Summarize ZAP Report
+      run: |
+        echo "ZAP Report Summary:"
+        grep "<p class=\"high\">" zap-report.html || echo "No High Severity Issues Found"
+        grep "<p class=\"medium\">" zap-report.html || echo "No Medium Severity Issues Found"
+        grep "<p class=\"low\">" zap-report.html || echo "No Low Severity Issues Found"
