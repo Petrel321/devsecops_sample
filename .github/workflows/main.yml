@@ -79,13 +79,10 @@ jobs:
     - name: Pull Arachni Image
       run: docker pull securecodebox/arachni
 
-    - name: Deploy PyGoat Application
-      run: docker run --rm -d --name pygoat_app -p 8000:8000 pygoat/pygoat:latest
-
     - name: Wait for PyGoat to start
       run: |
         echo "Waiting for PyGoat to start..."
-        sleep 15
+        sleep 60
 
     - name: Run Arachni Scan
       run: |
