@@ -80,11 +80,11 @@ jobs:
       run: docker pull securecodebox/arachni
 
     - name: Deploy PyGoat Application
-      run: docker run --rm -d -p 7331:7331 pygoat/pygoat:latest
+      run: docker run --rm -d -p 8080:8080 pygoat/pygoat:latest
 
     - name: Run Arachni Scan
       run: |
-        docker run --rm securecodebox/arachni http://localhost:7331 --report-save-path=arachni-report.afr
+        docker run --rm securecodebox/arachni http://localhost:8080 --report-save-path=arachni-report.afr
 
     - name: Upload Arachni Report
       uses: actions/upload-artifact@v3
