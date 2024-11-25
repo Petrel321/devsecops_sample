@@ -69,10 +69,10 @@ jobs:
        path: scout-report.sarif
        
  dast_scan:
-    name: Build and Run DAST Scan using Arachni
-    runs-on: ubuntu-latest
+  name: Run DAST Scan using Arachni
+  runs-on: ubuntu-latest
 
-    steps:
+  steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
@@ -80,13 +80,18 @@ jobs:
       run: docker pull securecodebox/arachni
 
     - name: Deploy PyGoat Application
-      run: docker run --rm -d -p 8000:8000 pygoat/pygoat:latest
+      run: docker run --rm -d --name pygoat_app -p 8000:8000 pygoat/pygoat:latest
+
+    - name: Wait for PyGoat to start
+      run: |
+        echo "Waiting for PyGoat to start..."
+        sleep 15
 
     - name: Run Arachni Scan
       run: |
-        docker run --rm securecodebox/arachni http://localhost:8080 --report-save-path=arachni-report.afr
+        docker run --rm securecodebox/arachni http://localhost:8000 --report-save-path=arachni-report.afr
 
-    - name: Upload Arachni Report (AFR)
+    - name: Upload Arachni Report
       uses: actions/upload-artifact@v3
       if: always()
       with:
