@@ -24,7 +24,7 @@ jobs:
 
       - name: Run Nikto Scan
         run: |
-          nikto -h http://host.docker.internal:8000 -o nikto-report.html
+          nikto -h http://localhost:8000 -o nikto-report.html
 
       - name: Upload Nikto Report
         uses: actions/upload-artifact@v3
