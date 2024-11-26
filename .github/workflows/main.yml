@@ -3,32 +3,31 @@ name: CI
 # triggers pipeline when push is made to any branch (typical CI pipeline rule)
 on: [push]
 
-jobs:
-       
+jobs:  
  dast_scan:
     name: Run DAST Scan
     runs-on: ubuntu-latest
-    if: always()
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Pull Arachni Image
-        run: docker pull securecodebox/arachni
 
       - name: Deploy PyGoat Application
         run: |
           docker build -f Dockerfile -t mytestapp:latest .
           docker run --rm -d -p 8000:8000 --name pygoat mytestapp:latest
 
-      - name: Run Arachni Scan
+      - name: Install Nikto
         run: |
-          docker run --rm securecodebox/arachni http://host.docker.internal:8000 --report-save-path=arachni-report.afr
+          sudo apt-get update
+          sudo apt-get install -y nikto
 
-      - name: Upload Arachni Report
+      - name: Run Nikto Scan
+        run: |
+          nikto -h http://host.docker.internal:8000 -o nikto-report.html
+
+      - name: Upload Nikto Report
         uses: actions/upload-artifact@v3
-        if: always()
         with:
-          name: arachni-report.afr
-          path: arachni-report.afr
+          name: nikto-report.html
+          path: nikto-report.html
