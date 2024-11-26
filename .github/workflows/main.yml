@@ -69,55 +69,30 @@ jobs:
        path: scout-report.sarif
        
  dast_scan:
-    name: Dynamic Application Security Testing (DAST)
+    name: Run DAST Scan
     runs-on: ubuntu-latest
     needs: [sast_scan, image_scan]
-
+    if: always()
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker
-      uses: docker-practice/actions-setup-docker@v1
-      with:
-        docker_version: '20.10.7'
+      - name: Pull Arachni Image
+        run: docker pull securecodebox/arachni
 
-    - name: Build Docker Image
-      run: docker build -f Dockerfile -t mytestapp:latest .
+      - name: Deploy PyGoat Application
+        run: |
+          docker build -f Dockerfile -t mytestapp:latest .
+          docker run --rm -d -p 8000:8000 --name pygoat mytestapp:latest
 
-    - name: Run PyGoat Application
-      run: docker run --rm -d -p 8000:8000 --name pygoat mytestapp:latest
+      - name: Run Arachni Scan
+        run: |
+          docker run --rm securecodebox/arachni http://host.docker.internal:8000 --report-save-path=arachni-report.afr
 
-    - name: Wait for PyGoat to Start
-      run: |
-        for i in {1..30}; do
-          if curl -s http://localhost:8000 > /dev/null; then
-            echo "PyGoat is running!";
-            break;
-          fi;
-          echo "Waiting for PyGoat to start...";
-          sleep 2;
-        done
-
-    - name: Run Arachni Scan
-      run: |
-        docker run --rm securecodebox/arachni http://host.docker.internal:8000 --report-save-path=arachni-report.afr
-
-    - name: Upload Arachni Report
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: arachni-report.afr
-        path: arachni-report.afr
-
-    - name: Convert Arachni Report to HTML (optional)
-      run: |
-        docker run --rm securecodebox/arachni arachni-report arachni-report.afr --reporter=html
-        mv report.html arachni-report.html
-
-    - name: Upload Arachni HTML Report
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: arachni-report.html
-        path: arachni-report.html
+      - name: Upload Arachni Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: arachni-report.afr
+          path: arachni-report.afr
